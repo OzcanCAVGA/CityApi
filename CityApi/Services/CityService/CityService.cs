@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CityApi.Core;
 using CityApi.Core.Dtos.City;
+using CityApi.Data;
 
 
 namespace CityApi.Services.CityService
@@ -13,10 +14,12 @@ namespace CityApi.Services.CityService
             new CityEntity{Id = 1, Name = "Trabzon"}
         };
         private readonly IMapper _mapper;
+        private readonly DataContext _context;
 
-        public CityService(IMapper mapper)
+        public CityService(IMapper mapper, DataContext context)
         {
             _mapper = mapper;
+            _context = context;
         }
 
         public async Task<ServiceResponse<List<GetCity>>> AddCity(AddCity newCity)
