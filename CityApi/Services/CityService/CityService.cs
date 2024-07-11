@@ -2,17 +2,13 @@
 using CityApi.Core;
 using CityApi.Core.Dtos.City;
 using CityApi.Data;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace CityApi.Services.CityService
 {
     public class CityService : ICityService
     {
-        private static List<CityEntity> cityEntities = new List<CityEntity>
-        {
-            new CityEntity(),
-            new CityEntity{Id = 1, Name = "Trabzon"}
-        };
+        
         private readonly IMapper _mapper;
         private readonly DataContext _context;
 
@@ -26,25 +22,27 @@ namespace CityApi.Services.CityService
         {
             var serviceResponse = new ServiceResponse<List<GetCity>>();
             CityEntity city = _mapper.Map<CityEntity>(newCity);
-            city.Id = cityEntities.Max(x => x.Id) + 1;
-            cityEntities.Add(city);
-            serviceResponse.Data = cityEntities.Select(x => _mapper.Map<GetCity>(x)).ToList();
+            _context.CityEntities.Add(city);
+            await _context.SaveChangesAsync();
+            serviceResponse.Data = await _context.CityEntities.Select(x => _mapper.Map<GetCity>(x)).ToListAsync();
             return serviceResponse;
         }
+
+
         public async Task<ServiceResponse<List<GetCity>>> GetAllCity()
         {
 
-            var serviceResponse = new ServiceResponse<List<GetCity>> { Data = cityEntities.Select(x => _mapper.Map<GetCity>(x)).ToList() };
-            return serviceResponse;
+            var response = new ServiceResponse<List<GetCity>>();
+            var dbCityEntities = await _context.CityEntities.ToListAsync();
+            response.Data = dbCityEntities.Select(x => _mapper.Map<GetCity>(x)).ToList();
+            return response;
         }
-
         public async Task<ServiceResponse<GetCity>> GetAllCityById(int id)
         {
             var serviceResponse = new ServiceResponse<GetCity>();
-            var city = cityEntities.FirstOrDefault(c => c.Id == id);
-            serviceResponse.Data = _mapper.Map<GetCity>(city);
+            var dbcity = await _context.CityEntities.FirstOrDefaultAsync(x => x.Id == id);
+            serviceResponse.Data = _mapper.Map<GetCity>(dbcity);
             return serviceResponse;
-
         }
 
         public async Task<ServiceResponse<GetCity>> UpdateCity(UpdateCity updatedCity)
@@ -52,10 +50,12 @@ namespace CityApi.Services.CityService
             ServiceResponse<GetCity> serviceresponse = new ServiceResponse<GetCity>();
             try
             {
-                CityEntity city = cityEntities.FirstOrDefault(c => c.Id == updatedCity.Id);
+                var city = await _context.CityEntities.FirstOrDefaultAsync(c => c.Id == updatedCity.Id);
                 city.Name = updatedCity.Name;
                 city.Population = updatedCity.Populasyon;
                 city.Class = updatedCity.Class;
+
+                await _context.SaveChangesAsync();
 
                 serviceresponse.Data = _mapper.Map<GetCity>(city);
             }
@@ -68,15 +68,17 @@ namespace CityApi.Services.CityService
             return serviceresponse;
         }
 
+
         public async Task<ServiceResponse<List<GetCity>>> DeleteCity(int id)
         {
 
             ServiceResponse<List<GetCity>> serviceresponse = new ServiceResponse<List<GetCity>>();
             try
             {
-                CityEntity city = cityEntities.First(c => c.Id == id);
-                cityEntities.Remove(city);
-                serviceresponse.Data = cityEntities.Select(x => _mapper.Map<GetCity>(x)).ToList();
+                CityEntity city = await _context.CityEntities.FirstAsync(c => c.Id == id);
+                _context.CityEntities.Remove(city);
+                await _context.SaveChangesAsync();
+                serviceresponse.Data = _context.CityEntities.Select(x => _mapper.Map<GetCity>(x)).ToList();
             }
             catch (Exception ex)
             {

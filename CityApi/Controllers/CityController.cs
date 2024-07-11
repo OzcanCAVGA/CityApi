@@ -27,7 +27,7 @@ namespace CityApi.Controllers
 
         {
 
-            return Ok(_cityService.GetAllCityById(id));
+            return Ok(await _cityService.GetAllCityById(id));
         }
 
         [HttpPost]
