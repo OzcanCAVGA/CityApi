@@ -10,6 +10,6 @@ namespace CityApi.Data
 
         }
         public DbSet<CityEntity> CityEntities{ get; set; }
-        public DbSet<UserEntity>? UserEntities{ get; set; }
+        public DbSet<UserEntity> UserEntities{ get; set; }
     }
 }

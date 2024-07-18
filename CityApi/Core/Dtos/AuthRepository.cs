@@ -11,9 +11,29 @@ namespace CityApi.Core.Dtos
         {
             _context = context;
         }
-        public Task<ServiceResponse<string>> Login(string username, string password)
+        public async Task<ServiceResponse<string>> Login(string username, string password)
         {
-            throw new NotImplementedException();
+            var response = new ServiceResponse<string>();
+            var user = await _context.UserEntities.FirstOrDefaultAsync(x => x.Username.ToLower().Equals(username.ToLower()));
+
+            if (user == null)
+            {
+                response.Success = false;
+                response.Message = "Kullanici bulunamadi";
+            }
+            else if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            {
+                response.Success = false;
+                response.Message = "Hatali sifre";
+            }
+            else
+            {
+                response.Data = user.Id.ToString();
+            }
+
+            return response;
+
+
         }
 
         public async Task<ServiceResponse<int>> Register(UserEntity user, string password)
@@ -42,7 +62,7 @@ namespace CityApi.Core.Dtos
 
         public async Task<bool> UserExists(string username)
         {
-            if (await _context.UserEntities.AnyAsync(x => x.Username.ToLower().Equals(username.ToLower())))
+            if (await _context.UserEntities.AnyAsync(x => x.Username.ToLower() == username.ToLower()))
             {
                 return true;
             }
@@ -55,6 +75,15 @@ namespace CityApi.Core.Dtos
             {
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            }
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            {
+                var computeHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return computeHash.SequenceEqual(passwordHash);
             }
         }
 
