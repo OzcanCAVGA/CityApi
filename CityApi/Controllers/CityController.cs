@@ -1,10 +1,12 @@
 ﻿using CityApi.Core;
 using CityApi.Core.Dtos.City;
 using CityApi.Services.CityService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CityController : ControllerBase
@@ -15,7 +17,7 @@ namespace CityApi.Controllers
             _cityService = cityService;
         }
 
-
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<ServiceResponse<List<GetCity>>>> Get()
         {
